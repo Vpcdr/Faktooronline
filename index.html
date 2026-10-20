@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>فاکتور‌ساز</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5b8f8a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="فاکتور">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500;700&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@500;700&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#2b3a3a;--mut:#7a8785;--acc:#5b8f8a;--acc2:#e6efed;--line:#e3e0d8;--danger:#b5655c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d2423;--card:#263130;--ink:#e8eeec;--mut:#9fb0ad;--acc:#7fb3ac;--acc2:#2f3f3d;--line:#384644;--danger:#d98b82}}
+:root[data-theme="dark"]{--bg:#1d2423;--card:#263130;--ink:#e8eeec;--mut:#9fb0ad;--acc:#7fb3ac;--acc2:#2f3f3d;--line:#384644;--danger:#d98b82}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'B Traffic','Vazirmatn',Tahoma,sans-serif;font-size:15px;line-height:1.7}
+.v{display:none;max-width:640px;margin:0 auto;padding:16px}.v.on{display:block}
+h1,h2{font-family:'Noto Nastaliq Urdu','IranNastaliq',serif;font-weight:700;line-height:2.1;margin:0 0 8px;color:var(--acc)}
+h1{font-size:26px}h2{font-size:21px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
+.num{direction:ltr;text-align:right}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff;cursor:pointer}
+button.s{background:var(--acc2);color:var(--ink)}button.d{background:transparent;color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>*{flex:1;min-width:120px}
+.it{display:grid;grid-template-columns:2fr 0.8fr 1.2fr;gap:6px;margin-bottom:6px}
+.inv{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}
+.mut{color:var(--mut);font-size:13px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--acc2)}
+.sheet{background:#fff;color:#222;border:1px solid var(--line);border-radius:12px;padding:18px}
+.sheet table{width:100%;border-collapse:collapse;margin:10px 0}
+.sheet th,.sheet td{border-bottom:1px solid #e5e5e5;padding:6px 4px;text-align:right;font-size:14px}
+.sheet h2{color:#3d6b66}.tot{font-weight:700;font-size:17px;text-align:left}
+@media print{.v{display:none!important}#view{display:block!important;padding:0}.noprint{display:none!important}.sheet{border:0}}
+</style>
+</head>
+<body>
+
+<section class="v" id="setup">
+ <h1>خوش آمدید</h1>
+ <p class="mut">اطلاعات فروشنده را یک‌بار وارد کنید؛ در همهٔ فاکتورها می‌آید.</p>
+ <div class="card">
+  <label>لوگو</label><input type="file" id="s_logo" accept="image/*">
+  <label>نام</label><input id="s_fn">
+  <label>نام خانوادگی</label><input id="s_ln">
+  <label>شغل</label><input id="s_job">
+  <label>موبایل</label><input id="s_ph" class="num" inputmode="tel">
+  <label>شماره کارت</label><input id="s_card" class="num" inputmode="numeric">
+  <label>شماره شبا</label><input id="s_sheba" class="num" placeholder="IR...">
+  <label>شماره حساب</label><input id="s_acc" class="num" inputmode="numeric">
+  <div class="row"><button onclick="saveSeller()">ثبت و ادامه</button></div>
+ </div>
+</section>
+
+<section class="v" id="home">
+ <div class="top"><h1>فاکتورها</h1><button class="s" onclick="editSeller()">پروفایل</button></div>
+ <div class="row"><button onclick="newInv()">＋ فاکتور جدید</button></div>
+ <input id="q" placeholder="جستجو: نام خریدار، موبایل، شماره فاکتور" oninput="renderList()" style="margin-top:12px">
+ <div id="list" style="margin-top:12px"></div>
+ <div class="card">
+  <div class="mut" id="bk_t">پشتیبان‌گیری</div>
+  <div class="row">
+   <button class="s" onclick="backup()" id="bk_b">پشتیبان همه</button>
+   <button class="s" onclick="document.getElementById('imp').click()">بازیابی</button>
+  </div>
+  <p class="mut" style="margin:8px 0 0">پس از زدن پشتیبان، در منوی اشتراک‌گذاری گوشی «Drive»، ایمیل یا «ذخیره در فایل‌ها» را انتخاب کنید.</p>
+  <input type="file" id="imp" accept=".json" hidden onchange="restore(this)">
+ </div>
+</section>
+
+<section class="v" id="form">
+ <div class="top"><h2 id="f_t">فاکتور جدید</h2><span class="mut" id="f_meta"></span></div>
+ <div class="card">
+  <label>نام و نام خانوادگی خریدار</label><input id="b_name">
+  <label>موبایل خریدار</label><input id="b_ph" class="num" inputmode="tel">
+  <label>روش پرداخت (اختیاری)</label>
+  <select id="b_pt"><option value="">—</option><option value="کارت">شماره کارت</option><option value="شبا">شماره شبا</option><option value="حساب">شماره حساب</option></select>
+  <input id="b_pv" class="num" style="margin-top:6px" placeholder="شماره">
+ </div>
+ <div class="card">
+  <div class="it mut"><span>شرح خدمات / کالا</span><span>تعداد</span><span>قیمت (تومان)</span></div>
+  <div id="items"></div>
+  <div class="row"><button class="s" onclick="addRow()">＋ افزودن سطر</button></div>
+  <p class="tot" style="text-align:left">جمع: <span id="sum">۰</span> تومان</p>
+ </div>
+ <div class="row"><button onclick="saveInv()">ذخیره</button><button class="s" onclick="show('home')">انصراف</button></div>
+</section>
+
+<section class="v" id="view">
+ <div id="sheet" class="sheet"></div>
+ <div class="row noprint">
+  <button onclick="window.print()">صدور PDF</button>
+  <button class="s" onclick="sms()">پیامک</button>
+  <button class="s" onclick="shareInv()">اشتراک / Drive</button>
+ </div>
+ <div class="row noprint">
+  <button class="s" onclick="editInv()">ویرایش</button>
+  <button class="d" onclick="delInv()">حذف</button>
+  <button class="s" onclick="show('home')">بازگشت</button>
+ </div>
+</section>
+
+<script>
+const $=s=>document.getElementById(s);
+let db={seller:null,invoices:[],next:1000},cur=null,logo='';
+try{const r=localStorage.getItem('inv_db');if(r)db=JSON.parse(r)}catch(e){}
+const save=()=>{try{localStorage.setItem('inv_db',JSON.stringify(db))}catch(e){}};
+const en=s=>String(s||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const fm=n=>Number(n||0).toLocaleString('fa-IR');
+const dt=iso=>new Date(iso).toLocaleDateString('fa-IR-u-ca-persian',{year:'numeric',month:'long',day:'numeric'});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function show(id){document.querySelectorAll('.v').forEach(v=>v.classList.toggle('on',v.id===id));scrollTo(0,0);if(id==='home')renderList()}
+
+/* seller */
+$('s_logo').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=160;const x=c.getContext('2d'),m=Math.min(im.width,im.height);x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,160,160);logo=c.toDataURL('image/jpeg',.8)};im.src=r.result};r.readAsDataURL(f)};
+function editSeller(){const s=db.seller||{};logo=s.logo||'';[['fn','fn'],['ln','ln'],['job','job'],['ph','ph'],['card','card'],['sheba','sheba'],['acc','acc']].forEach(([a,b])=>$('s_'+a).value=s[b]||'');show('setup')}
+function saveSeller(){
+ const g=k=>$('s_'+k).value.trim();
+ if(!g('fn')||!g('ln')||!g('ph')){alert('نام، نام خانوادگی و موبایل الزامی است');return}
+ db.seller={fn:g('fn'),ln:g('ln'),job:g('job'),ph:g('ph'),card:g('card'),sheba:g('sheba'),acc:g('acc'),logo};
+ save();show('home')}
+
+/* list */
+function renderList(){
+ const q=en($('q').value).trim().toLowerCase();
+ const L=db.invoices.filter(i=>!q||(i.buyer+' '+en(i.phone)+' '+i.id).toLowerCase().includes(q)).sort((a,b)=>b.id-a.id);
+ $('list').innerHTML=L.length?L.map(i=>`<div class="card inv" onclick="openInv(${i.id})"><div><b>${esc(i.buyer)}</b><div class="mut">فاکتور ${fm(i.id).replace(/٬/g,'')} · ${dt(i.date)}</div></div><b>${fm(i.total)}</b></div>`).join(''):'<p class="mut" style="text-align:center">فاکتوری نیست</p>';
+ $('bk_b').textContent=q?'پشتیبان نتایج جستجو':'پشتیبان همه';
+ $('bk_t').textContent=q?'برای پشتیبان یک خریدار، نامش را جستجو کنید':'پشتیبان‌گیری';
+}
+
+/* form */
+function addRow(d={}){
+ const r=document.createElement('div');r.className='it';
+ r.innerHTML=`<input class="d" value="${esc(d.desc||'')}"><input class="q num" inputmode="decimal" value="${d.qty||1}"><input class="p num" inputmode="numeric" value="${d.price||''}">`;
+ r.oninput=calc;$('items').appendChild(r)}
+const rows=()=>[...$('items').children].map(r=>({desc:r.querySelector('.d').value.trim(),qty:parseFloat(en(r.querySelector('.q').value))||0,price:parseFloat(en(r.querySelector('.p').value).replace(/[,٬]/g,''))||0}));
+function calc(){$('sum').textContent=fm(rows().reduce((a,r)=>a+r.qty*r.price,0))}
+function newInv(){
+ cur=null;['b_name','b_ph','b_pv'].forEach(k=>$(k).value='');$('b_pt').value='';
+ $('items').innerHTML='';for(let i=0;i<5;i++)addRow();
+ $('f_t').textContent='فاکتور جدید';$('f_meta').textContent='شماره '+fm(db.next).replace(/٬/g,'')+' · '+dt(new Date());calc();show('form')}
+function editInv(){
+ const i=cur;$('b_name').value=i.buyer;$('b_ph').value=i.phone;$('b_pt').value=i.pt;$('b_pv').value=i.pv;
+ $('items').innerHTML='';i.items.forEach(addRow);while($('items').children.length<5)addRow();
+ $('f_t').textContent='ویرایش فاکتور';$('f_meta').textContent='شماره '+fm(i.id).replace(/٬/g,'')+' · '+dt(i.date);calc();show('form')}
+function saveInv(){
+ const name=$('b_name').value.trim();if(!name){alert('نام خریدار را وارد کنید');return}
+ const items=rows().filter(r=>r.desc||r.price);if(!items.length){alert('حداقل یک سطر پر کنید');return}
+ const o={buyer:name,phone:$('b_ph').value.trim(),pt:$('b_pt').value,pv:$('b_pv').value.trim(),items,total:items.reduce((a,r)=>a+r.qty*r.price,0)};
+ if(cur){Object.assign(cur,o)}else{cur={id:db.next++,date:new Date().toISOString(),...o};db.invoices.push(cur)}
+ save();openInv(cur.id)}
+
+/* view */
+function openInv(id){
+ cur=db.invoices.find(i=>i.id===id);const i=cur,s=db.seller||{};
+ const pay=[s.card&&'کارت: '+s.card,s.sheba&&'شبا: '+s.sheba,s.acc&&'حساب: '+s.acc].filter(Boolean);
+ $('sheet').innerHTML=`<div class="top"><div><h2 style="margin:0">فاکتور</h2><div class="mut">شماره ${fm(i.id).replace(/٬/g,'')} · ${dt(i.date)}</div></div>${s.logo?`<img class="logo" src="${s.logo}">`:''}</div>
+ <p><b>فروشنده:</b> ${esc(s.fn)} ${esc(s.ln)}${s.job?' — '+esc(s.job):''}<br><span dir="ltr">${esc(s.ph)}</span><br>${pay.map(p=>`<span class="mut" dir="auto">${esc(p)}</span>`).join('<br>')}</p>
+ <p><b>خریدار:</b> ${esc(i.buyer)}${i.phone?' — <span dir="ltr">'+esc(i.phone)+'</span>':''}${i.pv?'<br><span class="mut">'+esc(i.pt)+': '+esc(i.pv)+'</span>':''}</p>
+ <table><tr><th>#</th><th>شرح</th><th>تعداد</th><th>قیمت</th><th>جمع</th></tr>${i.items.map((r,n)=>`<tr><td>${fm(n+1)}</td><td>${esc(r.desc)}</td><td>${fm(r.qty)}</td><td>${fm(r.price)}</td><td>${fm(r.qty*r.price)}</td></tr>`).join('')}</table>
+ <div class="tot">مبلغ قابل پرداخت: ${fm(i.total)} تومان</div>`;
+ show('view')}
+function delInv(){if(confirm('این فاکتور حذف شود؟')){db.invoices=db.invoices.filter(i=>i!==cur);save();show('home')}}
+function text(){const i=cur,s=db.seller;return `فاکتور شماره ${i.id} — ${dt(i.date)}\nفروشنده: ${s.fn} ${s.ln}${s.job?' ('+s.job+')':''}\n`+i.items.map(r=>`• ${r.desc} ×${r.qty} = ${fm(r.qty*r.price)}`).join('\n')+`\nجمع: ${fm(i.total)} تومان`+(s.card?`\nکارت: ${s.card}`:'')+(s.sheba?`\nشبا: ${s.sheba}`:'')+(s.acc?`\nحساب: ${s.acc}`:'')}
+function sms(){location.href='sms:'+en(cur.phone)+'?&body='+encodeURIComponent(text())}
+async function shareInv(){
+ const f=new File([JSON.stringify({seller:db.seller,invoices:[cur]})],'factor-'+cur.id+'.json',{type:'application/json'});
+ try{if(navigator.share){const d={title:'فاکتور '+cur.id,text:text()};if(navigator.canShare&&navigator.canShare({files:[f]}))d.files=[f];await navigator.share(d);return}}catch(e){return}
+ try{await navigator.clipboard.writeText(text());alert('متن فاکتور کپی شد')}catch(e){alert(text())}}
+
+/* backup */
+async function backup(){
+ const q=en($('q').value).trim().toLowerCase();
+ const L=db.invoices.filter(i=>!q||(i.buyer+' '+en(i.phone)+' '+i.id).toLowerCase().includes(q));
+ if(!L.length){alert('فاکتوری برای پشتیبان نیست');return}
+ const nm='backup-'+(q?'filtered-':'all-')+new Date().toISOString().slice(0,10)+'.json';
+ const f=new File([JSON.stringify({seller:db.seller,invoices:L})],nm,{type:'application/json'});
+ try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:nm});return}}catch(e){return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=nm;a.click()}
+function restore(el){
+ const f=el.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);let n=0;(d.invoices||[]).forEach(i=>{if(!db.invoices.some(x=>x.id===i.id&&x.date===i.date)){if(db.invoices.some(x=>x.id===i.id))i.id=db.next;db.invoices.push(i);db.next=Math.max(db.next,i.id+1);n++}});if(!db.seller&&d.seller)db.seller=d.seller;save();renderList();alert(fm(n)+' فاکتور بازیابی شد')}catch(e){alert('فایل معتبر نیست')}};
+ r.readAsText(f);el.value=''}
+
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+show(db.seller?'home':'setup');
+</script>
+</body>
+</html>
