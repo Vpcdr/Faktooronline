@@ -90,7 +90,10 @@ button.s{background:var(--acc2);color:var(--ink)}button.d{background:transparent
   <div class="it mut"><span>شرح خدمات / کالا</span><span>تعداد</span><span>قیمت (تومان)</span></div>
   <div id="items"></div>
   <div class="row"><button class="s" onclick="addRow()">＋ افزودن سطر</button></div>
-  <p class="tot" style="text-align:left">جمع: <span id="sum">۰</span> تومان</p>
+  <div class="mut" style="text-align:left;margin-top:8px">جمع کل: <span id="sub">۰</span> تومان</div>
+  <label>تخفیف (مبلغ یا درصد، مثلاً 50000 یا 10%)</label>
+  <input id="b_disc" class="num" inputmode="decimal" placeholder="اختیاری" oninput="calc()">
+  <p class="tot" style="text-align:left;margin:10px 0 0">قابل پرداخت: <span id="sum">۰</span> تومان</p>
  </div>
  <div class="row"><button onclick="saveInv()">ذخیره</button><button class="s" onclick="show('home')">انصراف</button></div>
 </section>
@@ -144,19 +147,21 @@ function addRow(d={}){
  r.innerHTML=`<input class="d" value="${esc(d.desc||'')}"><input class="q num" inputmode="decimal" value="${d.qty||1}"><input class="p num" inputmode="numeric" value="${d.price||''}">`;
  r.oninput=calc;$('items').appendChild(r)}
 const rows=()=>[...$('items').children].map(r=>({desc:r.querySelector('.d').value.trim(),qty:parseFloat(en(r.querySelector('.q').value))||0,price:parseFloat(en(r.querySelector('.p').value).replace(/[,٬]/g,''))||0}));
-function calc(){$('sum').textContent=fm(rows().reduce((a,r)=>a+r.qty*r.price,0))}
+const discAmt=(sub,raw)=>{raw=en(raw).trim().replace(/[,٬]/g,'');if(!raw)return 0;const n=parseFloat(raw)||0;return raw.endsWith('%')?Math.round(sub*Math.min(n,100)/100):Math.min(sub,n)};
+function calc(){const sub=rows().reduce((a,r)=>a+r.qty*r.price,0),d=discAmt(sub,$('b_disc').value);$('sub').textContent=fm(sub);$('sum').textContent=fm(sub-d)}
 function newInv(){
- cur=null;['b_name','b_ph','b_pv'].forEach(k=>$(k).value='');$('b_pt').value='';
+ cur=null;['b_name','b_ph','b_pv','b_disc'].forEach(k=>$(k).value='');$('b_pt').value='';
  $('items').innerHTML='';for(let i=0;i<5;i++)addRow();
  $('f_t').textContent='فاکتور جدید';$('f_meta').textContent='شماره '+fm(db.next).replace(/٬/g,'')+' · '+dt(new Date());calc();show('form')}
 function editInv(){
- const i=cur;$('b_name').value=i.buyer;$('b_ph').value=i.phone;$('b_pt').value=i.pt;$('b_pv').value=i.pv;
+ const i=cur;$('b_name').value=i.buyer;$('b_ph').value=i.phone;$('b_pt').value=i.pt;$('b_pv').value=i.pv;$('b_disc').value=i.discRaw||'';
  $('items').innerHTML='';i.items.forEach(addRow);while($('items').children.length<5)addRow();
  $('f_t').textContent='ویرایش فاکتور';$('f_meta').textContent='شماره '+fm(i.id).replace(/٬/g,'')+' · '+dt(i.date);calc();show('form')}
 function saveInv(){
  const name=$('b_name').value.trim();if(!name){alert('نام خریدار را وارد کنید');return}
  const items=rows().filter(r=>r.desc||r.price);if(!items.length){alert('حداقل یک سطر پر کنید');return}
- const o={buyer:name,phone:$('b_ph').value.trim(),pt:$('b_pt').value,pv:$('b_pv').value.trim(),items,total:items.reduce((a,r)=>a+r.qty*r.price,0)};
+ const o={buyer:name,phone:$('b_ph').value.trim(),pt:$('b_pt').value,pv:$('b_pv').value.trim(),items,discRaw:$('b_disc').value.trim()};
+ const sub=items.reduce((a,r)=>a+r.qty*r.price,0);o.sub=sub;o.disc=discAmt(sub,o.discRaw);o.total=sub-o.disc;
  if(cur){Object.assign(cur,o)}else{cur={id:db.next++,date:new Date().toISOString(),...o};db.invoices.push(cur)}
  save();openInv(cur.id)}
 
@@ -167,11 +172,11 @@ function openInv(id){
  $('sheet').innerHTML=`<div class="top"><div><h2 style="margin:0">فاکتور</h2><div class="mut">شماره ${fm(i.id).replace(/٬/g,'')} · ${dt(i.date)}</div></div>${s.logo?`<img class="logo" src="${s.logo}">`:''}</div>
  <p><b>فروشنده:</b> ${esc(s.fn)} ${esc(s.ln)}${s.job?' — '+esc(s.job):''}<br><span dir="ltr">${esc(s.ph)}</span><br>${pay.map(p=>`<span class="mut" dir="auto">${esc(p)}</span>`).join('<br>')}</p>
  <p><b>خریدار:</b> ${esc(i.buyer)}${i.phone?' — <span dir="ltr">'+esc(i.phone)+'</span>':''}${i.pv?'<br><span class="mut">'+esc(i.pt)+': '+esc(i.pv)+'</span>':''}</p>
- <table><tr><th>#</th><th>شرح</th><th>تعداد</th><th>قیمت</th><th>جمع</th></tr>${i.items.map((r,n)=>`<tr><td>${fm(n+1)}</td><td>${esc(r.desc)}</td><td>${fm(r.qty)}</td><td>${fm(r.price)}</td><td>${fm(r.qty*r.price)}</td></tr>`).join('')}</table>
+ <table><tr><th>#</th><th>شرح</th><th>تعداد</th><th>قیمت</th><th>جمع</th></tr>${i.items.map((r,n)=>`<tr><td>${fm(n+1)}</td><td>${esc(r.desc)}</td><td>${fm(r.qty)}</td><td>${fm(r.price)}</td><td>${fm(r.qty*r.price)}</td></tr>`).join('')}</table>${i.disc>0?`<div style="text-align:left">جمع کل: ${fm(i.sub)} تومان<br>تخفیف: ${fm(i.disc)} تومان</div>`:''}
  <div class="tot">مبلغ قابل پرداخت: ${fm(i.total)} تومان</div>`;
  show('view')}
 function delInv(){if(confirm('این فاکتور حذف شود؟')){db.invoices=db.invoices.filter(i=>i!==cur);save();show('home')}}
-function text(){const i=cur,s=db.seller;return `فاکتور شماره ${i.id} — ${dt(i.date)}\nفروشنده: ${s.fn} ${s.ln}${s.job?' ('+s.job+')':''}\n`+i.items.map(r=>`• ${r.desc} ×${r.qty} = ${fm(r.qty*r.price)}`).join('\n')+`\nجمع: ${fm(i.total)} تومان`+(s.card?`\nکارت: ${s.card}`:'')+(s.sheba?`\nشبا: ${s.sheba}`:'')+(s.acc?`\nحساب: ${s.acc}`:'')}
+function text(){const i=cur,s=db.seller;return `فاکتور شماره ${i.id} — ${dt(i.date)}\nفروشنده: ${s.fn} ${s.ln}${s.job?' ('+s.job+')':''}\n`+i.items.map(r=>`• ${r.desc} ×${r.qty} = ${fm(r.qty*r.price)}`).join('\n')+(i.disc>0?`\nجمع کل: ${fm(i.sub)}\nتخفیف: ${fm(i.disc)}`:'')+`\nقابل پرداخت: ${fm(i.total)} تومان`+(s.card?`\nکارت: ${s.card}`:'')+(s.sheba?`\nشبا: ${s.sheba}`:'')+(s.acc?`\nحساب: ${s.acc}`:'')}
 function sms(){location.href='sms:'+en(cur.phone)+'?&body='+encodeURIComponent(text())}
 async function shareInv(){
  const f=new File([JSON.stringify({seller:db.seller,invoices:[cur]})],'factor-'+cur.id+'.json',{type:'application/json'});
